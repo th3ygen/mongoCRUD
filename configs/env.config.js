@@ -1,4 +1,5 @@
 module.exports = {
+    NODE_ENV: 'development',
     port: 8080,
     mongoose: {
         dbName: 'myras',

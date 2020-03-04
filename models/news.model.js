@@ -1,65 +1,72 @@
-const mongoose = require('../../../common/services/mongoose.service').mongoose;
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const fs = require('fs');
 const path = require('path');
 
+const chalk = require('chalk');
+
 const schema = new Schema({
     header: String,
     description: String,
-    imgURL: [String],
     tags: [String],
-    official: Boolean,
+    imgURL: String,
 
-    timestamp: Number,
+    content: {
+        text: String,
+        imgURL: [String]
+    },
 
-    dateCreated: Number
+    datePosted: Number,
+    author: String
 });
 
 const News = mongoose.model('News', schema);
 
-exports.create = (header, description, img, tags, official, timestamp) => {
+// takes id and img base64 data, then returns stored img path as promise
+const storeImg = (id, imgData) => {
     return new Promise((resolve, reject) => {
-        // create image and store it to folder
-        // uses timestamp as id
+        const imgStorePath = path.join(__root, `/storage/user/${id}/img/`);
 
-        let imgPaths = [];
-        let imgPath = path.join(__root, `/storage/img/${new Date().getTime()}`);
-
-        fs.mkdir(imgPath, { recursive: true }, (err) => {
-            if (err) {
-                console.log(err);
+        // create a new folder labeled with id provided
+        fs.mkdir(imgStorePath, { recursive: true }, (err) => {
+            if (err) {  
                 reject(err);
+
             } else {
-                img.forEach((data, x) => {
-                    let filePath = path.join(imgPath, `${x}.png`);
-                    fs.writeFile(filePath, data, 'base64', (err, res) => {
-                        if (err) {
-                            console.log(err);
-                            reject(err);
-                        }
-                    });
-                    
-                    imgPaths.push(filePath);
+                const imgPath = path.join(imgStorePath, `${new Date().getTime()}.png`);
+
+                fs.writeFile(imgPath, imgData, 'base64', (err, res) => {
+                    if (err) {
+                        reject(err);
+
+                    } else {
+                        resolve(imgPath);
+
+                    }
                 });
-                const news = new News({
-                    header: header,
-                    description: description,
-                    imgURL: imgPaths,
-                    tags: tags,
-                    official: official,
-        
-                    timestamp: timestamp,
-        
-                    dateCreated: new Date().getTime()
-                });
-        
-                resolve(news.save());
             }
-        })
-        
+        });
     });
-    
+}
+
+exports.create = (authorId, author, header, brief, tags, img, content, timestamp) => {
+    let news = new News({
+        header: header,
+        description: brief,
+        tags: tags,
+        imgURL: `/storage/images/${img}`,
+
+        content: {
+            text: content,
+            imgURL: []
+        },
+
+        datePosted: timestamp,
+        author: author
+    });
+
+    return news.save();
 }
 
 // read all news

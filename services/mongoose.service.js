@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const config = require('../../common/configs/env.config');
+const config = require('../configs/env.config');
 
 const chalk = require('chalk');
 
@@ -18,5 +18,3 @@ const connectWithRetry = () => {
 }
 
 connectWithRetry();
-
-exports.mongoose = mongoose;
